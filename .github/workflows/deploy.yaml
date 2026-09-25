@@ -36,6 +36,8 @@ jobs:
           tags: |
             shreyashsri/pbwebsite:${{ steps.meta.outputs.env }}
             shreyashsri/pbwebsite:${{ steps.meta.outputs.env }}-${{ steps.meta.outputs.sha_short }}
+          build-args: |
+            NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=${{ vars.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
