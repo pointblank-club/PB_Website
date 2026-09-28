@@ -82,6 +82,10 @@ export default function ThreeBackground() {
     const frameMat = new THREE.MeshBasicMaterial({
       color: GAP_NEON,
       side: THREE.DoubleSide,
+      // Solid neon slabs were what actually swallowed text when keys lifted.
+      // The hover outlines carry the effect; these only need to suggest depth.
+      transparent: true,
+      opacity: 0.45,
     });
 
     for (let r = 0; r < ROWS; r++) {

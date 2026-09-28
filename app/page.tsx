@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import HeroSection from "@/components/homepage/HeroSection";
+import Recruitment from "@/components/ui/Recruitment";
 import MissionVisionSection from "@/components/homepage/MissionVisionSection";
 import CardStack from "@/components/homepage/CardStack";
 import DomainsSection from "@/components/homepage/DomainsSection";
@@ -19,7 +20,10 @@ export default function Home() {
 
   return (
     <>
-      <HeroSection />
+      <div className="relative">
+        <Recruitment />
+        <HeroSection />
+      </div>
       <MissionVisionSection />
       <CardStack />
       <DomainsSection />

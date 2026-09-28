@@ -1,0 +1,144 @@
+"use client";
+
+import Link from "next/link";
+import { motion } from "framer-motion";
+
+/**
+ * A laurel branch: leaves sit on a circular arc (the wreath) and are swept
+ * toward the tip rather than fanning radially, which is what separates a
+ * laurel from a sunburst. Angles below are in degrees on the unit circle
+ * (maths convention, y up); the SVG y axis is flipped when the point is
+ * placed, and leaf rotation is expressed directly in SVG degrees.
+ */
+const CX = 60;
+const CY = 53;
+const RADIUS = 38;
+
+// Bottom of the branch -> tip. Leaves are longest through the belly of the arc.
+const ARC = [240, 220, 200, 180, 160, 140, 120];
+const OUTER_LENGTHS = [11, 14.5, 17, 18, 17, 14, 9.5];
+const INNER_ARC = [228, 208, 188, 168, 148];
+
+const rad = (deg: number) => (deg * Math.PI) / 180;
+const point = (a: number) => ({
+  x: CX + RADIUS * Math.cos(rad(a)),
+  y: CY - RADIUS * Math.sin(rad(a)),
+});
+
+// Tangent (pointing toward the tip) is 90 - a in SVG degrees; swing 35 deg
+// outward for the outer leaves and inward for the smaller filler leaves.
+const OUTER_LEAVES = ARC.map((a, i) => ({
+  ...point(a),
+  angle: 55 - a,
+  r: OUTER_LENGTHS[i],
+}));
+
+const INNER_LEAVES = INNER_ARC.map((a) => ({
+  ...point(a),
+  angle: 125 - a,
+  r: 6,
+}));
+
+const START = point(ARC[0]);
+const END = point(ARC[ARC.length - 1]);
+
+function Leaf({
+  x,
+  y,
+  angle,
+  r,
+  opacity,
+}: {
+  x: number;
+  y: number;
+  angle: number;
+  r: number;
+  opacity: number;
+}) {
+  return (
+    <g transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle})`}>
+      <ellipse
+        cx={r}
+        cy="0"
+        rx={r}
+        ry={r * 0.38}
+        fill="currentColor"
+        opacity={opacity}
+        stroke="var(--color-pbpages)"
+        strokeWidth="0.9"
+      />
+    </g>
+  );
+}
+
+function Laurel({ flip = false }: { flip?: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 64 100"
+      aria-hidden
+      className="h-16 w-[2.6rem] shrink-0 text-pbgreen sm:h-24 sm:w-[3.85rem] lg:h-28 lg:w-[4.5rem]"
+      style={flip ? { transform: "scaleX(-1)" } : undefined}
+    >
+      <path
+        d={`M${START.x.toFixed(2)} ${START.y.toFixed(2)} A ${RADIUS} ${RADIUS} 0 0 1 ${END.x.toFixed(2)} ${END.y.toFixed(2)}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.8"
+      />
+      {INNER_LEAVES.map((leaf, i) => (
+        <Leaf key={`i${i}`} {...leaf} opacity={0.45} />
+      ))}
+      {OUTER_LEAVES.map((leaf, i) => (
+        <Leaf key={`o${i}`} {...leaf} opacity={0.7 + i * 0.04} />
+      ))}
+    </svg>
+  );
+}
+
+export default function AwardBadge() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="relative w-full"
+    >
+      {/* glow anchoring the award to the hero */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[150%] w-[min(44rem,100%)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(55,255,0,0.10),transparent_70%)]"
+      />
+
+      <div className="relative mx-auto flex w-full max-w-2xl items-center justify-center gap-1.5 sm:gap-4 lg:gap-5">
+        <Laurel />
+
+        <Link
+          href="/achievements"
+          className="group flex min-w-0 flex-col items-center gap-1.5 text-center sm:gap-2"
+        >
+          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-pbgreen sm:text-xs sm:tracking-[0.38em]">
+            FOSS Awards 2026
+          </span>
+
+          <span className="text-balance text-lg font-semibold leading-snug text-white sm:text-2xl lg:text-[28px]">
+            Student Community of the Year
+          </span>
+
+          <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5 text-[11px] text-pbtext transition-colors duration-300 group-hover:text-white sm:text-sm">
+            IndiaFOSS 2026 · FOSS United
+            <span
+              aria-hidden
+              className="translate-y-px opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
+            >
+              ↗
+            </span>
+          </span>
+        </Link>
+
+        <Laurel flip />
+      </div>
+    </motion.div>
+  );
+}
