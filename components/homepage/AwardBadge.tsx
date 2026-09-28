@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
+import indiaFoss from "@/public/images/indiafoss.svg";
+import fossUnited from "@/public/images/fossunited.svg";
 
 /**
  * A laurel branch: leaves sit on a circular arc (the wreath) and are swept
@@ -126,14 +129,24 @@ export default function AwardBadge() {
             Student Community of the Year
           </span>
 
-          <span className="inline-flex flex-wrap items-center justify-center gap-x-1.5 text-[11px] text-pbtext transition-colors duration-300 group-hover:text-white sm:text-sm">
-            IndiaFOSS 2026 · FOSS United
+          {/* Official marks, both the bracketed wordmark variant, matched on
+              frame height so they read as one lockup: event, then organisation.
+              The dot stops the two frames reading as a single mark. */}
+          <span className="mt-1 flex items-center gap-2.5 opacity-80 transition-opacity duration-300 group-hover:opacity-100 sm:gap-3">
+            <Image
+              src={indiaFoss}
+              alt="IndiaFOSS"
+              className="h-7 w-auto sm:h-8"
+            />
             <span
               aria-hidden
-              className="translate-y-px opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100"
-            >
-              ↗
-            </span>
+              className="h-1 w-1 shrink-0 rounded-full bg-pbgreen/60"
+            />
+            <Image
+              src={fossUnited}
+              alt="FOSS United"
+              className="h-7 w-auto sm:h-8"
+            />
           </span>
         </Link>
 

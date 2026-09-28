@@ -24,7 +24,7 @@ export default function Recruitment() {
           Think you could be a part of Point Blank? We&apos;d love to have you.
         </span>
         <span className="truncate text-xs text-pbtext sm:hidden">
-          Think you could be one of us?
+          Want to join us?
         </span>
 
         <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-white underline decoration-pbgreen/50 decoration-2 underline-offset-4 transition-colors duration-300 group-hover:decoration-pbgreen sm:text-sm">
