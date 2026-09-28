@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { UploadCloudIcon, XIcon } from "lucide-react";
+import RecruitmentBanner from "@/components/ui/RecruitmentBanner";
 
 interface Member {
   _id: string;
@@ -358,6 +359,7 @@ export default function Members(props: { members: Member[] }) {
                           />
                         ))}
                     </div>
+                  {heading === "First Year" && <RecruitmentBanner />}
                   </div>
                 }
               />
@@ -365,7 +367,6 @@ export default function Members(props: { members: Member[] }) {
           ))}
         </div>
       </div>
-
       <div className="h-24 w-full shrink-0" />
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
