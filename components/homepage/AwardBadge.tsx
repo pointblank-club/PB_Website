@@ -58,17 +58,20 @@ function Leaf({
   r: number;
   opacity: number;
 }) {
+  // Lanceolate: two arcs meeting in a point at each end. An ellipse reads as
+  // a blob once the branch is shown large; the taper is what makes it a leaf.
+  const w = r * 0.44;
+  const d = `M0 0 C ${r * 0.34} ${-w} ${r * 1.5} ${-w} ${r * 2} 0 C ${r * 1.5} ${w} ${r * 0.34} ${w} 0 0 Z`;
+
   return (
     <g transform={`translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${angle})`}>
-      <ellipse
-        cx={r}
-        cy="0"
-        rx={r}
-        ry={r * 0.38}
+      <path
+        d={d}
         fill="currentColor"
         opacity={opacity}
         stroke="var(--color-pbpages)"
-        strokeWidth="0.9"
+        strokeWidth="0.8"
+        strokeLinejoin="round"
       />
     </g>
   );
@@ -76,10 +79,12 @@ function Leaf({
 
 function Laurel({ flip = false }: { flip?: boolean }) {
   return (
+    // Padded past the drawing box: the longest leaves reach x=-3.5 and the
+    // upper tips sit near y=0, so a "0 0 64 100" box cropped them.
     <svg
-      viewBox="0 0 64 100"
+      viewBox="-10 -8 74 106"
       aria-hidden
-      className="h-16 w-[2.6rem] shrink-0 text-pbgreen sm:h-24 sm:w-[3.85rem] lg:h-28 lg:w-[4.5rem]"
+      className="h-16 w-auto shrink-0 text-pbgreen sm:h-24 lg:h-28"
       style={flip ? { transform: "scaleX(-1)" } : undefined}
     >
       <path
@@ -117,38 +122,58 @@ export default function AwardBadge() {
       <div className="relative mx-auto flex w-full max-w-2xl items-center justify-center gap-1.5 sm:gap-4 lg:gap-5">
         <Laurel />
 
-        <Link
-          href="/achievements"
-          className="group flex min-w-0 flex-col items-center gap-1.5 text-center sm:gap-2"
-        >
-          <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-pbgreen sm:text-xs sm:tracking-[0.38em]">
-            FOSS Awards 2026
-          </span>
+        <div className="flex min-w-0 flex-col items-center gap-1.5 text-center sm:gap-2">
+          <Link
+            href="/achievements"
+            className="group flex flex-col items-center gap-1.5 sm:gap-2"
+          >
+            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-pbgreen sm:text-xs sm:tracking-[0.38em]">
+              FOSS Awards 2026
+            </span>
 
-          <span className="text-balance text-lg font-semibold leading-snug text-white sm:text-2xl lg:text-[28px]">
-            Student Community of the Year
-          </span>
+            <span className="text-balance text-lg font-semibold leading-snug text-white transition-colors duration-300 group-hover:text-pbgreen sm:text-2xl lg:text-[28px]">
+              Student Community of the Year
+            </span>
+          </Link>
 
           {/* Official marks, both the bracketed wordmark variant, matched on
               frame height so they read as one lockup: event, then organisation.
-              The dot stops the two frames reading as a single mark. */}
-          <span className="mt-1 flex items-center gap-2.5 opacity-80 transition-opacity duration-300 group-hover:opacity-100 sm:gap-3">
-            <Image
-              src={indiaFoss}
-              alt="IndiaFOSS"
-              className="h-7 w-auto sm:h-8"
-            />
+              The dot stops the two frames reading as a single mark. Each links
+              out on its own, which is why they sit outside the achievements
+              link rather than nested inside it. */}
+          <span className="mt-1 flex items-center gap-2.5 sm:gap-3">
+            <a
+              href="https://fossunited.org/indiafoss/2026"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            >
+              <Image
+                src={indiaFoss}
+                alt="IndiaFOSS 2026"
+                className="h-7 w-auto sm:h-8"
+              />
+            </a>
+
             <span
               aria-hidden
               className="h-1 w-1 shrink-0 rounded-full bg-pbgreen/60"
             />
-            <Image
-              src={fossUnited}
-              alt="FOSS United"
-              className="h-7 w-auto sm:h-8"
-            />
+
+            <a
+              href="https://fossunited.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="opacity-80 transition-opacity duration-300 hover:opacity-100"
+            >
+              <Image
+                src={fossUnited}
+                alt="FOSS United"
+                className="h-7 w-auto sm:h-8"
+              />
+            </a>
           </span>
-        </Link>
+        </div>
 
         <Laurel flip />
       </div>
