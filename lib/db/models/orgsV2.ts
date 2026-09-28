@@ -4,7 +4,7 @@ export interface IOrg extends Document {
   login: string;
   avatarUrl: string;
   htmlUrl: string;
-  platform: "github" | "gitlab";
+  platform: "github" | "gitlab" | "linux";
   lastFetched: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -15,7 +15,7 @@ const OrgSchema = new Schema<IOrg>(
     login: { type: String, required: true, lowercase: true, trim: true },
     avatarUrl: { type: String, required: true },
     htmlUrl: { type: String, required: true },
-    platform: { type: String, enum: ["github", "gitlab"], default: "github" },
+    platform: { type: String, enum: ["github", "gitlab", "linux"], default: "github" },
     lastFetched: { type: Date, default: Date.now },
   },
   { timestamps: true }

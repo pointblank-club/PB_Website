@@ -40,10 +40,11 @@ interface DashboardData {
 }
 
 function getPreferredPlatform(
-  platforms: Array<"github" | "gitlab">,
-): "github" | "gitlab" | undefined {
+  platforms: Array<"github" | "gitlab" | "linux">,
+): "github" | "gitlab" | "linux" | undefined {
   if (platforms.includes("github")) return "github";
   if (platforms.includes("gitlab")) return "gitlab";
+  if (platforms.includes("linux")) return "linux";
   return undefined;
 }
 

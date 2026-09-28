@@ -1,13 +1,14 @@
 // ─── API response shapes (new API) ───────────────────────────────────────────
 
 export type ContributionTag = "gsoc" | "lfx" | "both" | "none";
-export type ContributionPlatform = "github" | "gitlab";
+export type ContributionPlatform = "github" | "gitlab" | "linux";
 
 /** GET /api/contributions?view=stats */
 export interface StatsResponse {
   totalMergedPRs: number;
   github: number;
   gitlab: number;
+  linux: number;
 }
 
 /** One entry from GET /api/contributions?view=orgs */
