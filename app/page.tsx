@@ -15,9 +15,9 @@ const SITE_URL = "https://www.pointblank.club";
 
 export const metadata = buildMetadata({
   path: "/",
-  absoluteTitle: "Point Blank | Student Run Open Source Community from India",
+  absoluteTitle: "Point Blank · Student run Open Source Community, India",
   description:
-    "Point Blank is a student run open source community. We are a group of tech enthusiasts who love to learn and grow together.",
+    "Point Blank · student-run open source community from India. IndiaFOSS Student Community of the Year. Systems, Open Source, ML, DevOps, CyberSec, CP.",
 });
 
 
