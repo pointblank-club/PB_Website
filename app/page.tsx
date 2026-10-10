@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import HomeClient from "@/components/homepage/HomeClient";
 import { safeJsonLd } from "@/lib/seo/jsonld";
 import { buildMetadata } from "@/lib/seo/metadata";
-import { useEffect } from "react";
 import HeroSection from "@/components/homepage/HeroSection";
 import Recruitment from "@/components/ui/Recruitment";
 import MissionVisionSection from "@/components/homepage/MissionVisionSection";
@@ -11,7 +10,6 @@ import DomainsSection from "@/components/homepage/DomainsSection";
 import ActivitiesSection from "@/components/homepage/ActivitiesSection";
 import FoundingMembersSection from "@/components/homepage/FoundingMembersSection";
 import StayConnectedSection from "@/components/homepage/StayConnectedSection";
-import { useLoadingStore } from "@/lib/store/loading";
 
 const SITE_URL = "https://www.pointblank.club";
 
