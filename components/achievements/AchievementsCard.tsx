@@ -7,6 +7,7 @@ export type AchievementItem = {
   event: string;
   result: string;
   category: string; // "GSOC" | "LFX" | "HACKATHONS" | "SIH" | "LIFT" | "ACM" | "CP"
+  url?: string;
 };
 
 // Each row is an array of items — 1 item = full width, 2 = two columns, 3 = three columns, etc.
@@ -89,25 +90,50 @@ export function AchievementCard({
                     : "grid-cols-4";
             return (
               <div key={i} className={`grid gap-2 ${gridClass}`}>
-                {row.map((item, j) => (
-                  <div
-                    key={j}
-                    className={`bg-pbsurface transition-all duration-300
+                {row.map((item, j) => {
+                  const active =
+                    filterCategory == "ALL" || filterCategory == item.category;
+                  const className = `block bg-pbsurface transition-all duration-300 border border-transparent
                       ${
-                        filterCategory == "ALL" ||
-                        filterCategory == item.category
+                        active
                           ? "opacity-100 text-pbgreen/90"
                           : "opacity-40 text-pbtext"
-                      } rounded-lg px-3.5 py-2.5 min-w-0`}
-                  >
-                    <p className="text-sm font-normal m-0 wrap-break-word">
-                      {item.event}
-                    </p>
-                    <p className="text-xs text-pbtext m-0 mt-0.5 wrap-break-word">
-                      {item.result}
-                    </p>
-                  </div>
-                ))}
+                      } rounded-lg px-3.5 py-2.5 min-w-0
+                      ${item.url ? "hover:border-pbgreen/60 cursor-pointer" : ""}`;
+                  const body = (
+                    <>
+                      <p className="text-sm font-normal m-0 wrap-break-word">
+                        {item.event}
+                        {item.url && (
+                          <span aria-hidden="true" className="ml-1 text-xs">
+                            ↗
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-pbtext m-0 mt-0.5 wrap-break-word">
+                        {item.result}
+                      </p>
+                    </>
+                  );
+
+                  // A real <a href> so crawlers and LLM fetchers can follow it.
+                  return item.url ? (
+                    <a
+                      key={j}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${item.event} ${item.result} (opens official page)`}
+                      className={className}
+                    >
+                      {body}
+                    </a>
+                  ) : (
+                    <div key={j} className={className}>
+                      {body}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

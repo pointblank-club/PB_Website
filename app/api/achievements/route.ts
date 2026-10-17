@@ -10,6 +10,7 @@ import { createLog } from "@/lib/server/logs";
 import { type Achievements } from "@/lib/db/models/achievements";
 import { verifyToken } from "@/lib/server/auth";
 import connectDB from "@/lib/db/connection";
+import { validateAchievementUrls } from "@/lib/server/achievementLinks";
 
 /*
  * GET /api/achievements
@@ -65,7 +66,13 @@ export async function POST(request: Request) {
       { success: false, error: "Missing required fields" },
       { status: 400 },
     );
-
+  
+  const urlProblems = validateAchievementUrls(achivements);
+  if (urlProblems.length > 0)
+    return NextResponse.json(
+     { success: false, error: urlProblems.join("; ") },
+      { status: 400 },
+    );
   const newAchievement = await createAchievements({ ...body });
 
   await createLog({
@@ -117,6 +124,12 @@ export async function PUT(request: Request) {
       { status: 404 },
     );
 
+  const urlProblems = validateAchievementUrls(achivements);
+  if (urlProblems.length > 0)
+  return NextResponse.json(
+    { success: false, error: urlProblems.join("; ") },
+    { status: 400 },
+  );
   const updatedAchievement = await updateAchievements({ ...body });
 
   await createLog({
