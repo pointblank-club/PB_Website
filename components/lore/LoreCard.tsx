@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoreType from "@/types/lore/loreType";
 import Image from "next/image";
 import LoreStoryComp from "./LoreStoryComp";
@@ -8,11 +8,13 @@ import { CalendarDays, ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 type LoreCardProps = LoreType & {
+  isPlaying?: boolean;
+  onHover?: () => void;
+  onLeave?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 };
 export default function LoreCard({
-  _id,
   id,
   title,
   date,
@@ -20,14 +22,46 @@ export default function LoreCard({
   preview,
   images,
   story,
+  isPlaying = false,
+  onHover,
+  onLeave,
   onEdit,
   onDelete,
 }: LoreCardProps) {
   const [currentImg, setCurrentImg] = useState<number>(0);
+  const [isSelfHovered, setIsSelfHovered] = useState<boolean>(false);
   const [expanded, setExpanded] = useState<boolean>(false);
 
+  const shouldPlay = isPlaying || (onHover ? false : isSelfHovered);
+  const activeImg = images && images.length > 0 ? currentImg % images.length : 0;
+
+  useEffect(() => {
+    if (!images || images.length <= 1 || !shouldPlay) return;
+
+    const timer = setInterval(() => {
+      setCurrentImg((curr) => (curr + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [images, shouldPlay, currentImg]);
+
   return (
-    <div className="mb-6 md:mb-9" data-lore-id={id ?? undefined}>
+    <div
+      className="mb-6 md:mb-9"
+      data-lore-id={id ?? undefined}
+      onMouseEnter={() => {
+        setIsSelfHovered(true);
+        onHover?.();
+      }}
+      onMouseLeave={() => {
+        setIsSelfHovered(false);
+        onLeave?.();
+      }}
+      onTouchStart={() => {
+        setIsSelfHovered(true);
+        onHover?.();
+      }}
+    >
       <div className="w-full flex justify-center px-4 sm:px-6">
         <div className="w-full max-w-7xl bg-[#1C1C1C] rounded-2xl overflow-hidden flex flex-col">
           <div className="w-full flex flex-col-reverse md:flex-row min-h-100">
@@ -108,12 +142,15 @@ export default function LoreCard({
                 {/* Image nav prev */}
                 {images.length > 1 && (
                   <button
+                    type="button"
+                    aria-label="Previous image"
                     className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-7 w-7 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white transition-colors cursor-pointer"
-                    onClick={() =>
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setCurrentImg(
                         (curr) => (curr - 1 + images.length) % images.length,
-                      )
-                    }
+                      );
+                    }}
                   >
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -122,10 +159,13 @@ export default function LoreCard({
                 {/*Image nav next*/}
                 {images.length > 1 && (
                   <button
+                    type="button"
+                    aria-label="Next image"
                     className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-7 w-7 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-sm text-white transition-colors cursor-pointer"
-                    onClick={() =>
-                      setCurrentImg((curr) => (curr + 1) % images.length)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImg((curr) => (curr + 1) % images.length);
+                    }}
                   >
                     <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -137,9 +177,14 @@ export default function LoreCard({
                     {images.map((_, idx) => (
                       <button
                         key={idx}
-                        onClick={() => setCurrentImg(idx)}
+                        type="button"
+                        aria-label={`Go to slide ${idx + 1}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImg(idx);
+                        }}
                         className={`rounded-full transition-all cursor-pointer ${
-                          currentImg === idx
+                          activeImg === idx
                             ? "w-4 h-2 bg-pbgreen"
                             : "w-2 h-2 bg-white/40 hover:bg-white/60"
                         }`}
@@ -155,7 +200,7 @@ export default function LoreCard({
                     alt={`${location} ${idx + 1}`}
                     fill
                     className={`w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
-                      idx === currentImg ? "opacity-100" : "opacity-0"
+                      idx === activeImg ? "opacity-100" : "opacity-0"
                     }`}
                     priority={idx === 0}
                     sizes="w-full"

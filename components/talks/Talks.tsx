@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { UploadCloudIcon, XIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, UploadCloudIcon, XIcon } from "lucide-react";
 import { type Talk } from "@/lib/db/models/talks";
 import { serializeId } from "@/lib/utils";
 import { LinkedIn } from "@/components/Icons";
@@ -138,11 +138,119 @@ const getLinkedinUsername = (url: string) => {
   }
 };
 
+const TalkImageSlideshow = ({
+  images,
+  title,
+  isPlaying = false,
+}: {
+  images: string[];
+  title: string;
+  isPlaying?: boolean;
+}) => {
+  const [currentImg, setCurrentImg] = useState<number>(0);
+  const [isSelfHovered, setIsSelfHovered] = useState<boolean>(false);
+
+  const shouldPlay = isPlaying || isSelfHovered;
+  const activeImg = images.length > 0 ? currentImg % images.length : 0;
+
+  useEffect(() => {
+    if (images.length <= 1 || !shouldPlay) return;
+
+    const timer = setInterval(() => {
+      setCurrentImg((curr) => (curr + 1) % images.length);
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [images.length, shouldPlay, currentImg]);
+
+  if (!images || images.length === 0) return null;
+
+  return (
+    <div
+      className="w-full aspect-3/2 overflow-hidden rounded-xl relative bg-pbgray"
+      onMouseEnter={() => setIsSelfHovered(true)}
+      onMouseLeave={() => setIsSelfHovered(false)}
+      onTouchStart={() => setIsSelfHovered(true)}
+    >
+      {/* Image nav prev */}
+      {images.length > 1 && (
+        <button
+          type="button"
+          aria-label="Previous image"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 active:scale-95 backdrop-blur-sm text-white transition-all cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentImg(
+              (curr) => (curr - 1 + images.length) % images.length,
+            );
+          }}
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
+
+      {/* Image nav next */}
+      {images.length > 1 && (
+        <button
+          type="button"
+          aria-label="Next image"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 active:scale-95 backdrop-blur-sm text-white transition-all cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setCurrentImg((curr) => (curr + 1) % images.length);
+          }}
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
+
+      {/* Dots */}
+      {images.length > 1 && (
+        <div className="absolute bottom-3 w-full flex justify-center items-center gap-1.5 z-10">
+          {images.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              aria-label={`Go to slide ${idx + 1}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCurrentImg(idx);
+              }}
+              className={`rounded-full transition-all cursor-pointer ${
+                activeImg === idx
+                  ? "w-4 h-2 bg-pbgreen"
+                  : "w-2 h-2 bg-white/40 hover:bg-white/60"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {images.map((src, idx) => (
+        <Image
+          key={idx}
+          src={src}
+          alt={`${title} ${idx + 1}`}
+          fill
+          className={`w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
+            idx === activeImg ? "opacity-100" : "opacity-0"
+          }`}
+          priority={idx === 0}
+          sizes="(max-width: 1024px) 100vw, 600px"
+          draggable={false}
+        />
+      ))}
+    </div>
+  );
+};
+
+
 
 export default function Talks(props: { talks: Talk[] }) {
   const [talks, setTalks] = useState<Talk[]>(props.talks);
   const [activeTab, setActiveTab] = useState<TabType>("all");
   const { authenticated, token } = useAuthStore();
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -334,7 +442,8 @@ export default function Talks(props: { talks: Talk[] }) {
 
           cardsRef.current.forEach((card, index) => {
             if (!card) return;
-            const rect = card.getBoundingClientRect();
+            const parent = card.parentElement;
+            const rect = parent ? parent.getBoundingClientRect() : card.getBoundingClientRect();
             const targetCenter = centerY + window.scrollY;
             const distanceFromCenter =
               rect.top + window.scrollY + rect.height / 2 - targetCenter;
@@ -466,7 +575,7 @@ export default function Talks(props: { talks: Talk[] }) {
         </motion.div>
 
         {/* Talks list */}
-        <div style={{ perspective: '2000px', perspectiveOrigin: 'center' }}>
+        <div>
           {filteredTalks.length === 0 && (
             <p className="text-gray-400 text-lg mt-8">No talks found.</p>
           )}
@@ -490,28 +599,27 @@ export default function Talks(props: { talks: Talk[] }) {
                   cardsRef.current[idx] = el;
                 }}
                 className="bg-pbgray rounded-xl max-w-screen-2xl mx-auto flex justify-center mb-16 px-4 md:px-10 lg:px-4"
+                onMouseEnter={() => setHoveredCardId(String(talk._id))}
+                onMouseLeave={() =>
+                  setHoveredCardId((curr) =>
+                    curr === String(talk._id) ? null : curr,
+                  )
+                }
+                onTouchStart={() => setHoveredCardId(String(talk._id))}
                 style={{
                   willChange: 'transform, opacity',
-                  transformStyle: 'preserve-3d',
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 <div className="flex flex-col lg:flex-row items-start py-4 w-full">
-                  <div className="flex flex-col items-center">
-                    {talk.images[0] && (
-                      <div className="w-full max-w-full lg:w-125 xl:w-150 aspect-3/2 overflow-hidden rounded-xl">
-                        <Image
-                          src={talk.images[0]}
-                          alt={talk.title}
-                          width={600}
-                          height={400}
-                          className="object-cover rounded-xl w-full h-full "
-                          draggable={false}
-                        />
-                      </div>
-                    )}
-                    <div className="flex flex-row flex-wrap justify-center w-full max-w-full lg:w-125 xl:w-150 gap-2 mt-4">
+                  <div className="flex flex-col items-center w-full lg:w-125 xl:w-150 shrink-0">
+                    <TalkImageSlideshow
+                      images={talk.images}
+                      title={talk.title}
+                      isPlaying={hoveredCardId === String(talk._id)}
+                    />
+                    <div className="flex flex-row flex-wrap justify-center w-full gap-2 mt-4">
                       {talk.speakers.split(",").map((speakerName, i) => {
                         const linkedins = talk.speakerLinkedins ? talk.speakerLinkedins.split(",") : [];
                         const linkedin = linkedins[i] && linkedins[i].trim() ? linkedins[i].trim() : undefined;
@@ -520,7 +628,7 @@ export default function Talks(props: { talks: Talk[] }) {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-start w-full px-4 md:px-8 lg:px-8 lg:min-h-[333px] xl:min-h-[400px] justify-between">
+                  <div className="flex flex-col items-start w-full px-0 lg:px-8 lg:min-h-[333px] xl:min-h-[400px] justify-between mt-6 lg:mt-0">
                     <div>
                       <h2 className="text-pbgreen font-normal text-2xl md:text-3xl lg:text-4xl leading-snug mb-4 max-w-4xl text-left break-words">
                         {talk.title}
@@ -543,7 +651,7 @@ export default function Talks(props: { talks: Talk[] }) {
                     <div className="w-full">
                       <div className="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
                         <button
-                          className="bg-pbsurface py-1.5 px-3 md:px-8 md:py-4 text-xs md:text-sm text-white rounded-2xl cursor-pointer hover:border border-pbgreen"
+                          className="bg-pbsurface min-h-[40px] py-2.5 px-5 md:min-h-[44px] md:px-8 md:py-3.5 text-xs md:text-sm text-white rounded-2xl cursor-pointer border border-transparent hover:border-pbgreen transition-colors active:scale-95 inline-flex items-center justify-center"
                           onClick={() =>
                             setExpanded(
                               expanded === String(talk._id)
@@ -562,12 +670,12 @@ export default function Talks(props: { talks: Talk[] }) {
                             href={talk.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-pbsurface py-1.5 px-3 md:px-8 md:py-4 text-xs md:text-sm text-pbgreen rounded-2xl font-medium hover:opacity-90 transition-opacity"
+                            className="bg-pbsurface min-h-[40px] py-2.5 px-5 md:min-h-[44px] md:px-8 md:py-3.5 text-xs md:text-sm text-pbgreen rounded-2xl font-medium hover:opacity-90 transition-opacity inline-flex items-center justify-center"
                           >
                             Watch here
                           </a>
                         ) : (
-                          <span className="bg-pbsurface py-1.5 px-3 md:px-8 md:py-4 text-xs md:text-sm text-white rounded-2xl">
+                          <span className="bg-pbsurface min-h-[40px] py-2.5 px-5 md:min-h-[44px] md:px-8 md:py-3.5 text-xs md:text-sm text-white rounded-2xl inline-flex items-center justify-center">
                             {talk.name} | {new Date(talk.date).toLocaleDateString("en-US", {
                               month: "short",
                               year: "numeric",
