@@ -40,7 +40,7 @@ export default function LoreCard({
 
     const timer = setInterval(() => {
       setCurrentImg((curr) => (curr + 1) % images.length);
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(timer);
   }, [images, shouldPlay, currentImg]);
