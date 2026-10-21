@@ -138,7 +138,7 @@ export default function LoreCard({
                 alt="dotted-BG"
               />
 
-              <div className="h-64 md:h-full w-[95%] md:w-full overflow-hidden relative rounded-[5px] bg-cover bg-pbgray bg-center">
+              <div className="h-64 md:h-full md:min-h-96 w-[95%] md:w-full overflow-hidden relative rounded-[5px] bg-cover bg-pbgray bg-center">
                 {/* Image nav prev */}
                 {images.length > 1 && (
                   <button
