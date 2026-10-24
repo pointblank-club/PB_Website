@@ -24,8 +24,9 @@ const RecruitmentForm: React.FC = () => {
   const [mode, setMode] = useState<boolean>(false);
   const [display, setDisplay] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [code, setCode] = useState("");
 
-  const [currentStep, setCurrentStep] = useState<"form" | "review">("form");
+  const [currentStep, setCurrentStep] = useState<"form" | "review" | "otp">("form");
   const [formDataForSubmission, setFormDataForSubmission] =
     useState<FormData | null>(null);
 
@@ -65,7 +66,7 @@ const RecruitmentForm: React.FC = () => {
     setDisplay(true);
   }, [watchedYear]);
 
-  const submitRegistration = async (data: FormData): Promise<boolean> => {
+  const requestVerificationCode = async (data: FormData): Promise<boolean> => {
     try {
       const response = await fetch(
         "/api/registration/recruitment?action=addRegistration",
@@ -81,14 +82,15 @@ const RecruitmentForm: React.FC = () => {
       const result = await response.json();
 
       if (!response.ok || result.error) {
-        toast.error(result.error || "Registration failed");
+        toast.error(result.error || "Could not send verification code");
         return false;
       }
 
-      toast.success("Registration successful!");
+      setCode("");
+      toast.success("Verification code sent to your email");
       return true;
     } catch {
-      toast.error("Registration failed");
+      toast.error("Could not send verification code");
       return false;
     }
   };
@@ -149,18 +151,49 @@ const RecruitmentForm: React.FC = () => {
     }
 
     if (currentStep === "review") {
+      const sent = await requestVerificationCode(data);
+      if (sent) setCurrentStep("otp");
       setIsSubmitting(false);
-      // Submit registration directly
-      const success = await submitRegistration(data);
-      if (success) {
-        posthog.capture("recruitment_submitted", {
-          year_of_study: data.year_of_study,
-          branch: data.branch,
-        });
-        setSuccess(true);
-      }
       return;
     }
+  };
+
+  const verifyCode = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting || !formDataForSubmission) return;
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/registration/recruitment?action=verifyRegistration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formDataForSubmission.email, code }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        toast.error(result.error || "Verification failed");
+        return;
+      }
+      setSuccess(true);
+      try {
+        posthog.capture("recruitment_submitted", {
+          year_of_study: formDataForSubmission.year_of_study,
+          branch: formDataForSubmission.branch,
+        });
+      } catch (error) {
+        console.error("Recruitment analytics failed:", error);
+      }
+    } catch {
+      toast.error("Verification failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resendCode = async () => {
+    if (isSubmitting || !formDataForSubmission) return;
+    setIsSubmitting(true);
+    await requestVerificationCode(formDataForSubmission);
+    setIsSubmitting(false);
   };
 
   if (isSuccess) {
@@ -195,6 +228,41 @@ const RecruitmentForm: React.FC = () => {
         onEditInformation={handleEditInformation}
         onSubmitRegistration={handleSubmitRegistration}
       />
+    );
+  }
+
+  if (currentStep === "otp" && formDataForSubmission) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <form onSubmit={verifyCode} className="w-full max-w-md p-6 sm:p-8 rounded-3xl bg-[#141414] shadow-2xl border border-white/10 space-y-5">
+          <h1 className="text-2xl font-bold text-[#37ff00]">Verify your email</h1>
+          <p className="text-white/60">Enter the six digit code sent to {formDataForSubmission.email}. It expires in 10 minutes.</p>
+          <div>
+            <label htmlFor="recruitment-code" className="block text-sm font-medium text-white/60 mb-2">Verification code</label>
+            <input
+              id="recruitment-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              required
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+              className="w-full px-4 py-3 rounded-xl border border-white/10 bg-pbsurface text-white tracking-widest focus:outline-none focus:border-[#37ff00]/50"
+            />
+          </div>
+          <button type="submit" disabled={isSubmitting} className="w-full bg-[#37ff00] text-black font-semibold rounded-xl py-3 px-6 disabled:opacity-50">
+            {isSubmitting ? "Verifying..." : "Verify and complete registration"}
+          </button>
+          <button type="button" disabled={isSubmitting} onClick={resendCode} className="w-full text-[#37ff00] disabled:opacity-50">
+            Resend code
+          </button>
+          <button type="button" disabled={isSubmitting} onClick={handleEditInformation} className="w-full text-white/60 disabled:opacity-50">
+            Edit information
+          </button>
+        </form>
+      </div>
     );
   }
 
