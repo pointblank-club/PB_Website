@@ -107,9 +107,17 @@ async function getOrgDetails(
   }
 }
 
+const OWN_ORG_LOGINS = new Set(
+  (process.env.OWN_ORG_LOGINS ?? "pointblank-club")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean)
+);
+console.log(`[GitHub] OWN_ORG_LOGINS resolved to: ${JSON.stringify([...OWN_ORG_LOGINS])}`);
+
 //OSS validation
 
-type RejectionReason = "private" | "own-repo" | "user-owned-low-stars" | "low-signal";
+type RejectionReason = "private" | "own-repo" | "own-org" | "user-owned-low-stars" | "low-signal";
 
 interface OSSCheckResult {
   valid:         boolean;
@@ -123,11 +131,24 @@ async function isValidOSS(
   username: string,
   customOrgLogins: Set<string>,
 ): Promise<OSSCheckResult> {
+  console.log(
+    `[isValidOSS] checking repo="${repo.full_name}" owner="${repo.owner.login}" ` +
+    `ownerLower="${repo.owner.login.toLowerCase()}" fork=${repo.fork} ` +
+    `matchesOwnOrg=${OWN_ORG_LOGINS.has(repo.owner.login.toLowerCase())}`
+  );
 
   if (repo.owner.login.toLowerCase() === username.toLowerCase()) {
     return {
       valid: false,
       reason: "own-repo",
+      effectiveRepo: repo,
+    };
+  }
+
+  if (OWN_ORG_LOGINS.has(repo.owner.login.toLowerCase())) {
+    return {
+      valid: false,
+      reason: "own-org",
       effectiveRepo: repo,
     };
   }
@@ -140,6 +161,11 @@ async function isValidOSS(
   }
 
   const orgLogin = effective.owner.login;
+  console.log(
+    `[isValidOSS] after fork-resolution repo="${effective.full_name}" ` +
+    `orgLogin="${orgLogin}" orgLoginLower="${orgLogin.toLowerCase()}" ` +
+    `matchesOwnOrg=${OWN_ORG_LOGINS.has(orgLogin.toLowerCase())}`
+  );
 
   if (effective.private) {
     return {
@@ -153,6 +179,14 @@ async function isValidOSS(
     return {
       valid: false,
       reason: "own-repo",
+      effectiveRepo: effective,
+    };
+  }
+
+  if (OWN_ORG_LOGINS.has(orgLogin.toLowerCase())) {
+    return {
+      valid: false,
+      reason: "own-org",
       effectiveRepo: effective,
     };
   }
@@ -331,6 +365,13 @@ export async function fetchGitHubMergedPRs(options: GitHubFetchOptions): Promise
       .map(extractOrgLogin)
       .filter((l): l is string => l !== null)
       .map((l) => l.toLowerCase())
+      .filter((l) => {
+        if (OWN_ORG_LOGINS.has(l)) {
+          console.warn(`[GitHub] Ignoring own-org "${l}" in customOrgLinks for ${username}`);
+          return false;
+        }
+        return true;
+      })
   );
 
   let searchFetched = 0, searchAccepted = 0, skippedSeen = 0;
