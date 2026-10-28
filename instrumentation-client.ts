@@ -16,6 +16,7 @@ if (token) {
     ui_host: "https://us.posthog.com",
     defaults: "2026-01-30",
     capture_exceptions: true,
+    capture_performance: { web_vitals: true },
     debug: process.env.NODE_ENV === "development",
   });
 }
