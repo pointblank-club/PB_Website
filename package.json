@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:mobile": "playwright test",
     "prepare": "husky"
   },
   "dependencies": {
@@ -47,6 +48,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.6.0",
