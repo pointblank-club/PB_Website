@@ -52,6 +52,7 @@ const TEXT_FIELDS: {
 
 export default function Lore(props: { lores: LoreType[] }) {
   const [lores, setLores] = useState<LoreType[]>(props.lores);
+  const [hoveredLoreId, setHoveredLoreId] = useState<string | null>(null);
   const { authenticated, token } = useAuthStore();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -284,6 +285,11 @@ export default function Lore(props: { lores: LoreType[] }) {
           >
             <LoreCard
               {...lore}
+              isPlaying={hoveredLoreId === lore._id}
+              onHover={() => setHoveredLoreId(lore._id)}
+              onLeave={() =>
+                setHoveredLoreId((curr) => (curr === lore._id ? null : curr))
+              }
               onEdit={authenticated ? () => openEdit(lore) : undefined}
               onDelete={authenticated ? () => setDeleteTarget(lore) : undefined}
             />
