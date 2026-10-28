@@ -6,6 +6,7 @@ export const LINK_CATEGORIES = [
   "Hackathons",
   "CP",
   "ACM",
+  "CTF",
 ] as const;
 export type LinkCategory = (typeof LINK_CATEGORIES)[number];
 
@@ -46,6 +47,11 @@ const LINK_CONFIG: Record<
   ACM: {
     label: "ACM link",
     placeholder: "https://... (official page for this achievement)",
+    officialHosts: [],
+  },
+  CTF: {
+    label: "CTF standings / event link",
+    placeholder: "https://... (official CTF scoreboard or event results)",
     officialHosts: [],
   },
 };
