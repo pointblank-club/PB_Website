@@ -27,7 +27,7 @@
  *     &username=<handle>
  *     &orgLogin=<org>
  *     &tag=gsoc|lfx|both|none
- *     &platform=github|gitlab
+ *     &platform=github|gitlab|linux
  *   Pagination:
  *     &page=1
  *     &limit=50 (max 200)
@@ -70,7 +70,7 @@ import { ensureOrgTagCache } from "@/lib/data/orgs";
 
 const VALID_TAGS      = new Set<OrgTag>(["gsoc", "lfx", "both", "none"]);
 const VALID_VIEWS     = new Set(["orgs", "stats", "contributors", "prs", "user"]);
-const VALID_PLATFORMS = new Set(["github", "gitlab"]);
+const VALID_PLATFORMS = new Set(["github", "gitlab", "linux"]);
 
 export async function GET(req: NextRequest) {
     await ensureOrgTagCache();
@@ -170,6 +170,7 @@ export async function GET(req: NextRequest) {
         total: contributions.length,
         github: contributions.filter(c => c.platform === "github").length,
         gitlab: contributions.filter(c => c.platform === "gitlab").length,
+        linux: contributions.filter(c => c.platform === "linux").length,
       };
 
       const orgMap = new Map();
