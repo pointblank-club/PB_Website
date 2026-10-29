@@ -10,8 +10,7 @@ import cliffFront from "@/public/images/hero/cliff-front.webp";
 import ridgeGlow from "@/public/images/hero/ridge-far-glow.webp";
 import columnsGlow from "@/public/images/hero/columns-far-glow.webp";
 import cliffGlow from "@/public/images/hero/cliff-front-glow.webp";
-import { RockLight, cursorLight } from "@/components/homepage/RockLight";
-import HeroFog from "@/components/homepage/HeroFog";
+import { RockLight } from "@/components/homepage/RockLight";
 import styles from "./HeroSection.module.css";
 
 const RIDGE_SIZES = "(max-width: 900px) 241vw, 89vw";
@@ -42,13 +41,11 @@ export default function HeroSection() {
     });
     drift(section, nx, ny);
     section.style.setProperty("--lp", "1");
-    Object.assign(cursorLight, { x: event.clientX, y: event.clientY, on: true });
   }
 
   function leavePointer(event: PointerEvent<HTMLElement>) {
     drift(event.currentTarget, 0, 0);
     event.currentTarget.style.setProperty("--lp", "0");
-    cursorLight.on = false;
   }
 
   return (
@@ -77,9 +74,9 @@ export default function HeroSection() {
             <Image src={cliffFront} alt="" priority sizes={CLIFF_SIZES} draggable={false} />
             <RockLight glow={cliffGlow} sizes={CLIFF_SIZES} />
           </div>
+          <div aria-hidden="true" data-parallax data-drift="9" className={styles.fogBack} />
+          <div aria-hidden="true" data-parallax data-drift="24" className={styles.fogFront} />
         </div>
-        <HeroFog layer="back" drift={9} />
-        <HeroFog layer="front" drift={24} />
       </div>
       <div aria-hidden="true" className={styles.scrim} />
 

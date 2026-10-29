@@ -1,8 +1,6 @@
 import Image, { type StaticImageData } from "next/image";
 import styles from "./HeroSection.module.css";
 
-export const cursorLight = { x: 0, y: 0, on: false };
-
 export function RockLight({ glow, sizes }: { glow: StaticImageData; sizes: string }) {
   return (
     <>
