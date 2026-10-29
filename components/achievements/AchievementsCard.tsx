@@ -6,7 +6,7 @@ import badge from "@/public/images/icons/badge.svg";
 export type AchievementItem = {
   event: string;
   result: string;
-  category: string; // "GSOC" | "LFX" | "HACKATHONS" | "SIH" | "LIFT" | "ACM" | "CP"
+  category: string; // "GSOC" | "LFX" | "HACKATHONS" | "SIH" | "LIFT" | "ACM" | "CP" | "CTF"
   url?: string;
 };
 

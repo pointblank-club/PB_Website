@@ -45,6 +45,7 @@ type AchievementsDoc = {
     Hackathons?: AchievementEntry[];
     CP?: AchievementEntry[];
     ACM?: AchievementEntry[];
+    CTF?: AchievementEntry[];
   };
 };
 
@@ -62,6 +63,7 @@ const DB_CATEGORIES = [
   "Hackathons",
   "CP",
   "ACM",
+  "CTF",
 ] as const;
 type DbCategory = (typeof DB_CATEGORIES)[number];
 
@@ -73,6 +75,7 @@ const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
   Hackathons: "HACKATHONS",
   CP: "CP",
   ACM: "ACM",
+  CTF: "CTF",
 };
 
 const FILTER_CATEGORIES = [
@@ -84,6 +87,7 @@ const FILTER_CATEGORIES = [
   "LIFT",
   "ACM",
   "CP",
+  "CTF",
 ];
 
 const headingText = "We Build. We Ship. We Win.";
