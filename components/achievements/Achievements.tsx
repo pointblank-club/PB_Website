@@ -413,9 +413,9 @@ export default function Achievements({
       const diff = countAchievements(b) - countAchievements(a);
       if (diff !== 0) return diff;
 
-      for (let category of HIERARCHY) {
+      for (const category of HIERARCHY) {
 
-        let auraDiff =(b.achivements[category]?.length ?? 0) - (a.achivements[category]?.length ?? 0);
+        const auraDiff =(b.achivements[category]?.length ?? 0) - (a.achivements[category]?.length ?? 0);
 
         if (auraDiff != 0){
           return auraDiff
