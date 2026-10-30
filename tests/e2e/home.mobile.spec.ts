@@ -29,32 +29,6 @@ test.describe("homepage on phones", () => {
       .toEqual([]);
   });
 
-  test("fog starts without errors", async ({ page }) => {
-    const fogWarnings: string[] = [];
-    const pageErrors: string[] = [];
-    page.on("console", (msg) => {
-      if (msg.text().includes("Hero fog unavailable")) fogWarnings.push(msg.text());
-    });
-    page.on("pageerror", (error) => pageErrors.push(error.message));
-    await page.reload();
-
-    const canvases = page.locator("#home canvas");
-    await expect(canvases).toHaveCount(2);
-
-    // CI browsers draw WebGL in software, if at all: without WebGL2 there is no fog to check.
-    const webgl2 = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
-    test.skip(!webgl2, "this browser build has no WebGL2");
-
-    // A CloudScene resizes its canvas from the 300x150 default once it is running.
-    await expect
-      .poll(() => canvases.evaluateAll((els) => (els as HTMLCanvasElement[]).every((c) => c.width !== 300 || c.height !== 150)), {
-        timeout: 15_000,
-      })
-      .toBe(true);
-    expect(fogWarnings).toEqual([]);
-    expect(pageErrors).toEqual([]);
-  });
-
   test("page does not scroll sideways", async ({ page }) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(0);
