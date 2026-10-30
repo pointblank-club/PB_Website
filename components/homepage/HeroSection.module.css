@@ -63,7 +63,24 @@
   animation-range: exit-crossing 0% exit-crossing 100%;
 }
 @keyframes parallax { from { translate: 0 0; } to { translate: 0 var(--scroll); } }
-.fogBack, .fogFront { position: absolute; left: -4%; top: -4%; width: 108%; height: 108%; pointer-events: none; }
+
+/* Plain gradients, painted once; the wind is a transform on the pseudo-element, so it never repaints. */
+.fogBack, .fogFront { position: absolute; left: -4%; top: -4%; width: 108%; height: 108%; pointer-events: none; overflow: hidden; }
+.fogBack::before, .fogFront::before { content: ""; position: absolute; inset: 0 -10%; animation: fog 40s ease-in-out infinite alternate; }
+.fogBack::before {
+  background:
+    radial-gradient(22% 24% at 8% 60%, rgb(179 203 180 / .55), transparent 70%),
+    radial-gradient(20% 14% at 62% 78%, rgb(179 203 180 / .5), transparent 70%),
+    radial-gradient(12% 10% at 47% 70%, rgb(179 203 180 / .4), transparent 70%);
+}
+.fogFront::before {
+  animation-duration: 28s;
+  background:
+    radial-gradient(16% 12% at 6% 92%, rgb(179 203 180 / .6), transparent 70%),
+    linear-gradient(to top, rgb(179 203 180 / .45), transparent 22%);
+  mask-image: linear-gradient(to right, #000 55%, rgb(0 0 0 / .65));
+}
+@keyframes fog { from { transform: translate3d(-4%, 0, 0); } to { transform: translate3d(4%, -1%, 0); } }
 
 .crackGlow, .crackPulse { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; }
 .crackGlow {
@@ -108,7 +125,7 @@
 .award { margin: 40px 0 0; width: fit-content; max-width: 100%; }
 
 @media (hover: hover) { .crackGlow { will-change: transform; } }
-@media (prefers-reduced-motion: reduce) { .crackPulse, .glass, .charge, .hero [data-parallax] { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .crackPulse, .glass, .charge, .hero [data-parallax], .fogBack::before, .fogFront::before { animation: none; } }
 @media (min-width: 1800px) { .copy { width: 45%; } }
 @media (max-width: 1199px) and (min-width: 901px) {
   .inner { padding-left: 3%; padding-right: 3%; }

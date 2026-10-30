@@ -1,6 +1,6 @@
 "use client";
 
-import type { PointerEvent } from "react";
+import { useState, type PointerEvent } from "react";
 import Image from "next/image";
 import AwardBadge from "@/components/homepage/AwardBadge";
 import ridgeFar from "@/public/images/hero/ridge-far.webp";
@@ -10,8 +10,7 @@ import cliffFront from "@/public/images/hero/cliff-front.webp";
 import ridgeGlow from "@/public/images/hero/ridge-far-glow.webp";
 import columnsGlow from "@/public/images/hero/columns-far-glow.webp";
 import cliffGlow from "@/public/images/hero/cliff-front-glow.webp";
-import { RockLight, cursorLight } from "@/components/homepage/RockLight";
-import HeroFog from "@/components/homepage/HeroFog";
+import { RockLight } from "@/components/homepage/RockLight";
 import styles from "./HeroSection.module.css";
 
 const RIDGE_SIZES = "(max-width: 900px) 241vw, 89vw";
@@ -26,6 +25,10 @@ function drift(section: HTMLElement, nx: number, ny: number) {
 }
 
 export default function HeroSection() {
+  // The glass mask reuses the trophy file the <img> picked from its srcset; pointing it at trophy.src would download the original as well.
+  // Masks are fetched in CORS mode, so the <img> loads with crossOrigin too, or the browser fetches the same file again.
+  const [trophyMask, setTrophyMask] = useState("");
+
   function movePointer(event: PointerEvent<HTMLElement>) {
     const section = event.currentTarget;
     const bounds = section.getBoundingClientRect();
@@ -38,13 +41,11 @@ export default function HeroSection() {
     });
     drift(section, nx, ny);
     section.style.setProperty("--lp", "1");
-    Object.assign(cursorLight, { x: event.clientX, y: event.clientY, on: true });
   }
 
   function leavePointer(event: PointerEvent<HTMLElement>) {
     drift(event.currentTarget, 0, 0);
     event.currentTarget.style.setProperty("--lp", "0");
-    cursorLight.on = false;
   }
 
   return (
@@ -63,18 +64,19 @@ export default function HeroSection() {
           <div data-layer="trophy" data-parallax data-drift="18" className={`${styles.layer} ${styles.trophy}`}>
             <Image src={trophy}
               alt="Point Blank's crystal trophy for the FOSS Awards 2026 Student Community of the Year"
-              priority sizes="(max-width: 900px) 60vw, 20vw" draggable={false} />
+              priority sizes="(max-width: 900px) 60vw, 20vw" draggable={false} crossOrigin="anonymous"
+              onLoad={(event) => setTrophyMask(`url("${event.currentTarget.currentSrc}")`)} />
             <span aria-hidden="true" className={styles.charge} />
-            <span aria-hidden="true" className={styles.glass}
-              style={{ maskImage: `url(${trophy.src})`, WebkitMaskImage: `url(${trophy.src})` }} />
+            {trophyMask && <span aria-hidden="true" className={styles.glass}
+              style={{ maskImage: trophyMask, WebkitMaskImage: trophyMask }} />}
           </div>
           <div aria-hidden="true" data-rock-light data-parallax data-drift="22" className={`${styles.layer} ${styles.cliff}`}>
             <Image src={cliffFront} alt="" priority sizes={CLIFF_SIZES} draggable={false} />
             <RockLight glow={cliffGlow} sizes={CLIFF_SIZES} />
           </div>
+          <div aria-hidden="true" data-parallax data-drift="9" className={styles.fogBack} />
+          <div aria-hidden="true" data-parallax data-drift="24" className={styles.fogFront} />
         </div>
-        <HeroFog layer="back" drift={9} />
-        <HeroFog layer="front" drift={24} />
       </div>
       <div aria-hidden="true" className={styles.scrim} />
 
