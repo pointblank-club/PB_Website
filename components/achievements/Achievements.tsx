@@ -67,6 +67,17 @@ const DB_CATEGORIES = [
 ] as const;
 type DbCategory = (typeof DB_CATEGORIES)[number];
 
+const HIERARCHY: DbCategory[] = [
+  "LFX",
+  "GSoC",
+  "SIH",
+  "CTF",
+  "Hackathons",
+  "CP",
+  "ACM",
+  "LIFT",
+]
+
 const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
   GSoC: "GSOC",
   LFX: "LFX",
@@ -401,6 +412,16 @@ export default function Achievements({
     .sort((a, b) => {
       const diff = countAchievements(b) - countAchievements(a);
       if (diff !== 0) return diff;
+
+      for (const category of HIERARCHY) {
+
+        const auraDiff =(b.achivements[category]?.length ?? 0) - (a.achivements[category]?.length ?? 0);
+
+        if (auraDiff != 0){
+          return auraDiff
+        }
+      }
+
       return a.name.localeCompare(b.name);
     });
 
