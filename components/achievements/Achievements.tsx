@@ -481,6 +481,16 @@ export default function Achievements({
         label: "CTF Wins",
         filter: "CTF",
       },
+      {
+        count: sum("LIFT"),
+        label: "LIFT Scholarships",
+        filter: "LIFT",
+      },
+      {
+        count: sum("ACM"),
+        label: "ACM Selections",
+        filter: "ACM",
+      },
     ].filter((s) => s.count > 0);
   }, [docs]);
 
