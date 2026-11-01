@@ -6,7 +6,7 @@ import badge from "@/public/images/icons/badge.svg";
 export type AchievementItem = {
   event: string;
   result: string;
-  category: string; // "GSOC" | "LFX" | "HACKATHONS" | "SIH" | "LIFT" | "ACM" | "CP" | "CTF"
+  category: string; // "GSOC" | "LFX" | "HACKATHONS" | "SIH" | "LIFT" | "ACM" | "CP" | "CTF" | "GHCI" | "CERTIFICATIONS"
   url?: string;
 };
 
@@ -22,10 +22,11 @@ export type Member = {
 // CARD LAYOUT
 export function AchievementCard({
   member,
-  filterCategory,
+  activeFilters,
 }: {
   member: Member;
-  filterCategory: string;
+  /** Empty array means ALL — every item is highlighted. */
+  activeFilters: string[];
 }) {
   const initials = member.name
     .split(" ")
@@ -92,7 +93,7 @@ export function AchievementCard({
               <div key={i} className={`grid gap-2 ${gridClass}`}>
                 {row.map((item, j) => {
                   const active =
-                    filterCategory == "ALL" || filterCategory == item.category;
+                    activeFilters.length === 0 || activeFilters.includes(item.category);
                   const className = `block bg-pbsurface transition-all duration-300 border border-transparent
                       ${
                         active
