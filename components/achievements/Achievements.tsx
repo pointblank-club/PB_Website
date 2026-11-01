@@ -46,6 +46,7 @@ type AchievementsDoc = {
     CP?: AchievementEntry[];
     ACM?: AchievementEntry[];
     CTF?: AchievementEntry[];
+    GHCI?: AchievementEntry[];
   };
 };
 
@@ -64,6 +65,7 @@ const DB_CATEGORIES = [
   "CP",
   "ACM",
   "CTF",
+  "GHCI",
 ] as const;
 type DbCategory = (typeof DB_CATEGORIES)[number];
 
@@ -76,6 +78,7 @@ const HIERARCHY: DbCategory[] = [
   "CP",
   "ACM",
   "LIFT",
+  "GHCI",
 ]
 
 const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
@@ -87,6 +90,7 @@ const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
   CP: "CP",
   ACM: "ACM",
   CTF: "CTF",
+  GHCI: "GHCI",
 };
 
 const FILTER_CATEGORIES = [
@@ -99,6 +103,7 @@ const FILTER_CATEGORIES = [
   "ACM",
   "CP",
   "CTF",
+  "GHCI",
 ];
 
 const headingText = "We Build. We Ship. We Win.";

@@ -18,6 +18,7 @@ export interface Achievements extends mongoose.Document {
     CP?: Achievement[];
     ACM?: Achievement[];
     CTF?: Achievement[];
+    GHCI?: Achievement[];
   };
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +45,7 @@ const AchievementsSchema = new mongoose.Schema(
       CP: [EntrySchema],
       ACM: [EntrySchema],
       CTF: [EntrySchema],
+      GHCI: [EntrySchema],
     },
   },
   { timestamps: true },
