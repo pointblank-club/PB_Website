@@ -149,15 +149,18 @@ const RecruitmentForm: React.FC = () => {
     }
 
     if (currentStep === "review") {
-      setIsSubmitting(false);
-      // Submit registration directly
-      const success = await submitRegistration(data);
-      if (success) {
-        posthog.capture("recruitment_submitted", {
-          year_of_study: data.year_of_study,
-          branch: data.branch,
-        });
-        setSuccess(true);
+      try {
+        // Submit registration directly
+        const success = await submitRegistration(data);
+        if (success) {
+          posthog.capture("recruitment_submitted", {
+            year_of_study: data.year_of_study,
+            branch: data.branch,
+          });
+          setSuccess(true);
+        }
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
