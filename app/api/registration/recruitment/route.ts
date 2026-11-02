@@ -264,14 +264,18 @@ async function checkDuplicates(request: Request) {
     if (existingCollegeId) duplicates.push("college_id");
 
     if (duplicates.length > 0) {
-      const posthog = getPostHogClient();
-      if (posthog) {
-        posthog.capture({
-          distinctId: normalizedEmail ?? "anonymous",
-          event: "recruitment_duplicate_detected",
-          properties: { duplicate_fields: duplicates },
-        });
-        await posthog.flush();
+      try {
+        const posthog = getPostHogClient();
+        if (posthog) {
+          posthog.capture({
+            distinctId: normalizedEmail ?? "anonymous",
+            event: "recruitment_duplicate_detected",
+            properties: { duplicate_fields: duplicates },
+          });
+          await posthog.flush();
+        }
+      } catch (posthogError) {
+        console.error("[PostHog] Failed to track duplicate check:", posthogError);
       }
       return NextResponse.json(
         { error: "Already registered", duplicates },
@@ -439,24 +443,23 @@ async function addRegistration(request: Request) {
 
     const newDoc = new RecruitmentModel(data2);
 
-    await Promise.race([
-      newDoc.save(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Save operation timeout")), 10000)
-      ),
-    ]);
+    await newDoc.save();
 
-    const posthog = getPostHogClient();
-    if (posthog) {
-      posthog.capture({
-        distinctId: data2.email,
-        event: "recruitment_registered",
-        properties: {
-          year_of_study: data2.year_of_study,
-          branch: data2.branch,
-        },
-      });
-      await posthog.flush();
+    try {
+      const posthog = getPostHogClient();
+      if (posthog) {
+        posthog.capture({
+          distinctId: data2.email,
+          event: "recruitment_registered",
+          properties: {
+            year_of_study: data2.year_of_study,
+            branch: data2.branch,
+          },
+        });
+        await posthog.flush();
+      }
+    } catch (posthogError) {
+      console.error("[PostHog] Failed to track registration:", posthogError);
     }
 
     return NextResponse.json({ message: "Registration successful!" });
