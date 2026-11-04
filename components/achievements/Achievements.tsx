@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Search, X, Pencil, Trash2, Plus, ChevronDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { AchievementCard } from "@/components/achievements/AchievementsCard";
@@ -47,6 +47,7 @@ type AchievementsDoc = {
     ACM?: AchievementEntry[];
     CTF?: AchievementEntry[];
     GHCI?: AchievementEntry[];
+    Certifications?: AchievementEntry[];
   };
 };
 
@@ -66,6 +67,7 @@ const DB_CATEGORIES = [
   "ACM",
   "CTF",
   "GHCI",
+  "Certifications",
 ] as const;
 type DbCategory = (typeof DB_CATEGORIES)[number];
 
@@ -79,6 +81,7 @@ const HIERARCHY: DbCategory[] = [
   "ACM",
   "LIFT",
   "GHCI",
+  "Certifications",
 ]
 
 const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
@@ -91,6 +94,7 @@ const CATEGORY_FILTER_MAP: Record<DbCategory, string> = {
   ACM: "ACM",
   CTF: "CTF",
   GHCI: "GHCI",
+  Certifications: "CERTIFICATIONS",
 };
 
 const FILTER_CATEGORIES = [
@@ -104,7 +108,23 @@ const FILTER_CATEGORIES = [
   "CP",
   "CTF",
   "GHCI",
+  "CERTIFICATIONS",
 ];
+
+/**
+ * Categories that are highlighted together when a filter button is clicked.
+ * E.g. clicking HACKATHONS also highlights SIH entries since SIH is a hackathon.
+ */
+const FILTER_GROUP: Partial<Record<string, string[]>> = {
+  HACKATHONS: ["HACKATHONS", "SIH"],
+};
+
+/** Returns the set of category strings that should be active for a given filter.
+ *  An empty array means "ALL" — every item is highlighted. */
+function getActiveFilters(filter: string): string[] {
+  if (filter === "ALL") return [];
+  return FILTER_GROUP[filter] ?? [filter];
+}
 
 const headingText = "We Build. We Ship. We Win.";
 const phrases = headingText.split(". ");
@@ -404,10 +424,11 @@ export default function Achievements({
   const filteredDocs = docs
     .filter((doc) => {
       const member = docToDisplayMember(doc);
+      const activeFilters = getActiveFilters(activeCategory);
       const matchesCategory =
         activeCategory === "ALL" ||
         member.achievements.some((row) =>
-          row.some((item) => item.category === activeCategory),
+          row.some((item) => activeFilters.includes(item.category)),
         );
       const matchesSearch =
         searchQuery.trim() === "" ||
@@ -433,6 +454,45 @@ export default function Achievements({
   const filteredMemberOptions = allMembers.filter((m) =>
     m.name.toLowerCase().includes(memberSearch.toLowerCase()),
   );
+
+  /** Aggregate counts across all docs (not filtered) for the summary pills. */
+  const statPills = useMemo(() => {
+    const sum = (cat: DbCategory) =>
+      docs.reduce((acc, doc) => acc + (doc.achivements[cat]?.length ?? 0), 0);
+
+    return [
+      {
+        count: sum("GSoC"),
+        label: "GSoC Selections",
+        filter: "GSOC",
+      },
+      {
+        count: sum("LFX"),
+        label: "LFX Mentorships",
+        filter: "LFX",
+      },
+      {
+        count: sum("Hackathons") + sum("SIH"),
+        label: "Hackathon Wins",
+        filter: "HACKATHONS",
+      },
+      {
+        count: sum("CTF"),
+        label: "CTF Wins",
+        filter: "CTF",
+      },
+      {
+        count: sum("LIFT"),
+        label: "LIFT Scholarships",
+        filter: "LIFT",
+      },
+      {
+        count: sum("ACM"),
+        label: "ACM Selections",
+        filter: "ACM",
+      },
+    ].filter((s) => s.count > 0);
+  }, [docs]);
 
   return (
     <main className="min-h-screen text-white">
@@ -464,6 +524,38 @@ export default function Achievements({
         >
           A showcase of achievements by the talented members of PointBlank
         </motion.p>
+
+        {/* Stat pills */}
+        {statPills.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-wrap items-center justify-center gap-3 mb-6"
+          >
+            {statPills.map((pill, idx) => (
+              <motion.button
+                key={pill.filter}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  duration: 0.5,
+                  delay: 1.9 + idx * 0.08,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                onClick={() => setActiveCategory(pill.filter)}
+                className="flex flex-col items-center px-5 py-3 rounded-xl border border-pbborder bg-pbgray text-white hover:border-pbgreen/60 hover:bg-pbgreen/5 transition-all duration-200 cursor-pointer min-w-[90px]"
+              >
+                <span className="text-2xl font-semibold leading-none">
+                  {pill.count}
+                </span>
+                <span className="text-[11px] mt-1 text-current opacity-70 uppercase tracking-wide whitespace-nowrap">
+                  {pill.label}
+                </span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
 
         {authenticated && (
           <motion.div
@@ -547,7 +639,7 @@ export default function Achievements({
             >
               <AchievementCard
                 member={docToDisplayMember(doc)}
-                filterCategory={activeCategory}
+                activeFilters={getActiveFilters(activeCategory)}
               />
               {authenticated && (
                 <div className="absolute top-3 right-3 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">

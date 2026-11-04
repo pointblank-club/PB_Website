@@ -7,6 +7,7 @@ export const LINK_CATEGORIES = [
   "CP",
   "ACM",
   "CTF",
+  "Certifications",
 ] as const;
 export type LinkCategory = (typeof LINK_CATEGORIES)[number];
 
@@ -52,6 +53,11 @@ const LINK_CONFIG: Record<
   CTF: {
     label: "CTF standings / event link",
     placeholder: "https://... (official CTF scoreboard or event results)",
+    officialHosts: [],
+  },
+  Certifications: {
+    label: "Certification link",
+    placeholder: "https://... (official certification credential or badge URL)",
     officialHosts: [],
   },
 };
