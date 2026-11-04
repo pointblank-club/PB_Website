@@ -15,6 +15,7 @@ import {
   fetchGitLabMergedMRs,
   resolveGitLabUserId,
 } from "./scrapers/gitlab";
+import { fetchLinuxKernelPatches } from "./scrapers/linux";
 import type { RawContribution } from "./scrapers/types";
 
 
@@ -47,7 +48,7 @@ async function saveContributions(
       login: string;
       avatarUrl: string;
       htmlUrl: string;
-      platform: "github" | "gitlab";
+      platform: "github" | "gitlab" | "linux";
     }
   >();
 
@@ -80,8 +81,17 @@ for (const org of orgsMap.values()) {
 }
 
   for (const c of contributions) {
+    // Key on url alone. A contribution's URL uniquely identifies the actual
+    // PR/commit regardless of platform, and — critically — username is not
+    // a stable value to key on: it's computed differently across platforms
+    // (and has changed as the Linux scraper's matching strategy evolved).
+    // Keying on {username, url} meant a later run with a different username
+    // for the same person failed to match the earlier document and
+    // inserted a duplicate instead of updating it, silently inflating PR
+    // counts. Keying on url alone means the record is always found and
+    // its username/memberName are simply refreshed to the current values.
     await Contribution.findOneAndUpdate(
-      { username: c.username, url: c.url },
+      { url: c.url },
       {
         $set: {
           memberName: c.memberName,
@@ -130,12 +140,15 @@ export async function runScrapeJob(options: {
 
   let totalGitHub = 0;
   let totalGitLab = 0;
+  let totalLinux = 0;
 
   for (const member of members) {
     const {
       name,
       githubUsername,
       gitlabUsername,
+      kernelName,
+      kernelEmail,
       customOrgLinks = [],
     } = member;
 
@@ -177,6 +190,25 @@ if (incremental) {
       }
     }
 
+    // Linux kernel (upstream torvalds/linux, keyed by author name + email)
+    if (kernelName) {
+      try {
+        console.log(`[Job] Linux → ${kernelName}`);
+
+        const patches = await fetchLinuxKernelPatches({
+          kernelName,
+          kernelEmail,
+          memberName: name,
+          since,
+        });
+
+        all.push(...patches);
+        totalLinux += patches.length;
+      } catch (err: any) {
+        console.error(`[Linux] ${name}:`, err.message);
+      }
+    }
+
     // GitLab
     if (gitlabUsername) {
       try {
@@ -214,7 +246,7 @@ if (incremental) {
   }
 
   console.log(
-    `[Job] Done — GitHub: ${totalGitHub}, GitLab: ${totalGitLab}`
+    `[Job] Done — GitHub: ${totalGitHub}, GitLab: ${totalGitLab}, Linux: ${totalLinux}`
   );
 }
 
@@ -226,7 +258,9 @@ export async function getOrgBreakdown(tagFilter?: string) {
       $group: {
         _id: "$orgLogin",
         totalMergedPRs: { $sum: 1 },
-        contributors: { $addToSet: "$username" },
+        contributorPairs: {
+          $addToSet: { username: "$username", memberName: "$memberName" },
+        },
         memberNames: { $addToSet: "$memberName" },
         platforms: { $addToSet: "$platform" },
       },
@@ -246,10 +280,9 @@ export async function getOrgBreakdown(tagFilter?: string) {
         _id: 0,
         orgLogin: "$_id",
         totalMergedPRs: 1,
-        contributors: 1,
+        contributorPairs: 1,
         memberNames: 1,
         platforms: 1,
-        contributorCount: { $size: "$contributors" },
         orgAvatar: { $arrayElemAt: ["$orgDetails.avatarUrl", 0] },
         orgUrl: { $arrayElemAt: ["$orgDetails.htmlUrl", 0] },
       },
@@ -257,10 +290,30 @@ export async function getOrgBreakdown(tagFilter?: string) {
     { $sort: { totalMergedPRs: -1 } },
   ]);
 
-  const tagged = result.map((org: any) => ({
-    ...org,
-    tag: getOrgTagSync(org.orgLogin),
-  }));
+  const tagged = result.map((org: any) => {
+    const byMember = new Map<string, string>();
+    for (const pair of org.contributorPairs as Array<{
+      username: string;
+      memberName: string;
+    }>) {
+      if (!byMember.has(pair.memberName)) {
+        byMember.set(pair.memberName, pair.username);
+      }
+    }
+    const contributors = [...byMember.values()];
+
+    return {
+      orgLogin: org.orgLogin,
+      totalMergedPRs: org.totalMergedPRs,
+      contributors,
+      contributorCount: contributors.length,
+      memberNames: org.memberNames,
+      platforms: org.platforms,
+      orgAvatar: org.orgAvatar,
+      orgUrl: org.orgUrl,
+      tag: getOrgTagSync(org.orgLogin),
+    };
+  });
 
   if (tagFilter) {
     return tagged.filter((o) => o.tag === tagFilter);
@@ -279,8 +332,8 @@ export async function getContributorStats(username?: string) {
       { $match: matchStage },
       {
         $group: {
-          _id: "$memberName", // 🔥 FIXED
-          usernames: { $addToSet: "$username" }, // optional but useful
+          _id: "$memberName", 
+          usernames: { $addToSet: "$username" },
           memberName: { $first: "$memberName" },
           totalMergedPRs: { $sum: 1 },
           githubPRs: {
@@ -291,6 +344,11 @@ export async function getContributorStats(username?: string) {
           gitlabPRs: {
             $sum: {
               $cond: [{ $eq: ["$platform", "gitlab"] }, 1, 0],
+            },
+          },
+          linuxPatches: {
+            $sum: {
+              $cond: [{ $eq: ["$platform", "linux"] }, 1, 0],
             },
           },
           orgs: { $addToSet: "$orgLogin" },
@@ -305,6 +363,7 @@ export async function getContributorStats(username?: string) {
           totalMergedPRs: 1,
           githubPRs: 1,
           gitlabPRs: 1,
+          linuxPatches: 1,
           orgs: 1,
           platforms: 1,
           totalOrgs: { $size: "$orgs" },
