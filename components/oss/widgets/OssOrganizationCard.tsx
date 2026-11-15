@@ -1,6 +1,6 @@
 import type { OrganizationView } from "@/components/oss/types";
 import OssAvatar from "@/components/oss/widgets/OssAvatar";
-import { contributorLabel } from "@/components/oss/utils";
+import { contributorLabel, getContributorGithubUrl } from "@/components/oss/utils";
 
 export default function OssOrganizationCard({
   organization,
@@ -82,14 +82,36 @@ export default function OssOrganizationCard({
             {organization.contributors.length === 0 ? (
               <span className="text-xs text-zinc-600">No contributors yet</span>
             ) : (
-              organization.contributors.map((contributor) => (
-                <span
-                  key={contributor.id}
-                  className="rounded-full border border-pbborder bg-pbdarkgray px-3 py-1.5 text-xs text-white"
-                >
-                  {contributorLabel(contributor)}
-                </span>
-              ))
+              organization.contributors.map((contributor) => {
+                const contributorUrl = getContributorGithubUrl(contributor);
+                const label = contributorLabel(contributor);
+
+                if (contributorUrl) {
+                  return (
+                    <a
+                      key={contributor.id}
+                      href={contributorUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(event) => event.stopPropagation()}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      aria-label={`Open ${label}'s profile`}
+                      className="rounded-full border border-pbborder bg-pbdarkgray px-3 py-1.5 text-xs text-white transition-colors hover:border-pbgreen hover:text-pbgreen"
+                    >
+                      {label}
+                    </a>
+                  );
+                }
+
+                return (
+                  <span
+                    key={contributor.id}
+                    className="rounded-full border border-pbborder bg-pbdarkgray px-3 py-1.5 text-xs text-white"
+                  >
+                    {label}
+                  </span>
+                );
+              })
             )}
           </div>
         </div>
