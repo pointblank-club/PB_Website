@@ -3,6 +3,31 @@ import { verifyLoginToken } from "@/lib/server/auth";
 import connectDB from "@/lib/db/connection";
 import { getPostHogClient } from "@/lib/posthog-server";
 
+function getRedirectUrl(path: string, request: NextRequest): URL {
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    process.env.NEXT_PUBLIC_DOMAIN;
+
+  const proto =
+    request.headers.get("x-forwarded-proto") ||
+    (request.url.startsWith("https") ? "https" : "http");
+
+  // In Docker / standalone environments, host often reports 0.0.0.0:3000
+  if (host && !host.includes("0.0.0.0")) {
+    const cleanHost = host.replace(/^https?:\/\//, "").replace(/\/+$/, "");
+    return new URL(path, `${proto}://${cleanHost}`);
+  }
+
+  // Fallback if host header was 0.0.0.0 or missing
+  const fallback = process.env.NEXT_PUBLIC_DOMAIN || "https://www.pointblank.club";
+  const cleanFallback = fallback.startsWith("http")
+    ? fallback.replace(/\/+$/, "")
+    : `https://${fallback.replace(/\/+$/, "")}`;
+
+  return new URL(path, cleanFallback);
+}
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -10,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       return NextResponse.redirect(
-        new URL("/admin?error=missing_token", request.url),
+        getRedirectUrl("/admin?error=missing_token", request),
       );
     }
 
@@ -18,7 +43,7 @@ export async function GET(request: NextRequest) {
 
     if (!sessionToken || typeof sessionToken !== "string") {
       return NextResponse.redirect(
-        new URL("/admin?error=invalid_token", request.url),
+        getRedirectUrl("/admin?error=invalid_token", request),
       );
     }
 
@@ -36,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = NextResponse.redirect(
-      new URL("/admin/logs", request.url),
+      getRedirectUrl("/admin/logs", request),
     );
     response.cookies.set("session", sessionToken, {
       httpOnly: true,
@@ -50,7 +75,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[Auth] Magic link error:", error);
     return NextResponse.redirect(
-      new URL("/admin?error=invalid_token", request.url),
+      getRedirectUrl("/admin?error=invalid_token", request),
     );
   }
 }

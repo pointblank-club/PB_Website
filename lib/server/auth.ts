@@ -58,7 +58,10 @@ export async function sendVerificationEmail(to: string): Promise<boolean> {
       { expiresIn: "15m" },
     );
 
-    let domain = process.env.NEXT_PUBLIC_DOMAIN || "http://localhost:3000";
+    let domain = process.env.NEXT_PUBLIC_DOMAIN || (process.env.NODE_ENV === "production" ? "https://www.pointblank.club" : "http://localhost:3000");
+    if (process.env.NODE_ENV === "production" && domain.includes("localhost")) {
+      domain = "https://www.pointblank.club";
+    }
     if (!domain.startsWith("http://") && !domain.startsWith("https://")) {
       domain = `https://${domain}`;
     }
