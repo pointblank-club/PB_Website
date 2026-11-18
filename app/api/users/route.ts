@@ -66,6 +66,15 @@ export async function POST(req: NextRequest) {
             updateQuery.$unset = { gitlabUsername: "" };
           }
 
+          if (m.kernelEmail && m.kernelEmail !== "NA") {
+            updateQuery.$set.kernelEmail = String(m.kernelEmail).trim().toLowerCase();
+          } else {
+            updateQuery.$unset = {
+              ...(updateQuery.$unset ?? {}),
+              kernelEmail: "",
+            };
+          }
+
           const doc = await User.findOneAndUpdate(
             { name: cleanName },
             updateQuery,
@@ -91,7 +100,7 @@ export async function POST(req: NextRequest) {
 
     // ================= SINGLE USER UPSERT =================
 
-    const { name, githubUsername, gitlabUsername, customOrgLinks } = body;
+    const { name, githubUsername, gitlabUsername, kernelEmail, customOrgLinks } = body;
 
     if (!name || typeof name !== "string" || name.trim() === "") {
       return NextResponse.json(
@@ -119,6 +128,15 @@ export async function POST(req: NextRequest) {
       updateQuery.$set.gitlabUsername = gitlabUsername;
     } else {
       updateQuery.$unset = { gitlabUsername: "" };
+    }
+
+    if (kernelEmail && kernelEmail !== "NA") {
+      updateQuery.$set.kernelEmail = String(kernelEmail).trim().toLowerCase();
+    } else {
+      updateQuery.$unset = {
+        ...(updateQuery.$unset ?? {}),
+        kernelEmail: "",
+      };
     }
 
     const doc = await User.findOneAndUpdate(

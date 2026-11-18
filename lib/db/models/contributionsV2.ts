@@ -5,7 +5,7 @@ export type OrgTag = "gsoc" | "lfx" | "both" | "none";
 export interface IContribution extends Document {
   memberName: string;
   username: string;
-  platform: "github" | "gitlab";
+  platform: "github" | "gitlab" | "linux";
   repoFullName: string;
   orgLogin: string;
   title: string;
@@ -21,7 +21,7 @@ const ContributionSchema = new Schema<IContribution>(
   {
     memberName: { type: String, required: true, index: true },
     username: { type: String, required: true, index: true },
-    platform: { type: String, enum: ["github", "gitlab"], required: true },
+    platform: { type: String, enum: ["github", "gitlab", "linux"], required: true },
     repoFullName: { type: String, required: true },
     orgLogin: { type: String, required: true, index: true },
     title: { type: String, required: true },
@@ -38,7 +38,7 @@ const ContributionSchema = new Schema<IContribution>(
   { timestamps: true }
 );
 
-ContributionSchema.index({ username: 1, url: 1 }, { unique: true });
+ContributionSchema.index({ url: 1 }, { unique: true });
 ContributionSchema.index({ memberName: 1, mergedAt: -1 });
 ContributionSchema.index({ orgLogin: 1, tag: 1 });
 

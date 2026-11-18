@@ -1,7 +1,7 @@
 export interface RawContribution {
     memberName:   string;
     username:     string;
-    platform:     "github" | "gitlab";
+    platform:     "github" | "gitlab" | "linux";
     repoFullName: string;
     orgLogin:     string;
     orgAvatarUrl: string;

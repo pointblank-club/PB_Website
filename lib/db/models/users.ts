@@ -5,6 +5,8 @@ export interface User extends Document {
   githubUsername?: string;
   gitlabUsername?: string;
   gitlabId?: number;
+  kernelName?: string | null;
+  kernelEmail?: string;
   customOrgLinks?: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -16,13 +18,12 @@ const UserSchema = new Schema<User>(
     githubUsername:  { type: String, default: null, index: true, sparse: true, unique: true },
     gitlabUsername:  { type: String, default: null, index: true, sparse: true, unique: true },
     gitlabId:        { type: Number, default: null },
+    kernelName:      { type: String, default: null, trim: true },
+    kernelEmail:     { type: String, default: null, index: true, sparse: true, lowercase: true, trim: true },
     customOrgLinks:  { type: [String], default: [] },
   },
   { timestamps: true }
 );
-
-//UserSchema.index({ githubUsername: 1 }, { unique: true, sparse: true });
-//UserSchema.index({ gitlabUsername: 1 }, { unique: true, sparse: true });
 
 const User: Model<User> =
   mongoose.models.User || mongoose.model<User>("User", UserSchema);
