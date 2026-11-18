@@ -18,8 +18,9 @@ export default async function AdminPage({
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("session");
 
-  if (sessionCookie && (await verifyAuth(sessionCookie.value)))
-    return redirect("/");
+  if (sessionCookie && (await verifyAuth(sessionCookie.value))) {
+    return redirect("/admin/logs");
+  }
 
   return <LoginForm error={error ? ERROR_MESSAGES[error] : undefined} />;
 }
