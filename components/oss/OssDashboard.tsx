@@ -84,6 +84,7 @@ async function fetchDashboardData(endpoint: string): Promise<DashboardData> {
       id: login,
       name: loginToName.get(login) ?? login,
       login,
+      url: `https://${getPreferredPlatform(org.platforms) === "gitlab" ? "gitlab.com" : "github.com"}/${login}`,
       platform: getPreferredPlatform(org.platforms),
     })),
   }));
