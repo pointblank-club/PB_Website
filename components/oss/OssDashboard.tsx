@@ -47,7 +47,13 @@ function getPreferredPlatform(
   return undefined;
 }
 
-async function fetchDashboardData(endpoint: string): Promise<DashboardData> {
+interface RawDashboardData {
+  stats: StatsResponse;
+  orgs: OrgsResponse;
+  contributors: ContributorsResponse;
+}
+
+async function fetchRawDashboardData(endpoint: string): Promise<RawDashboardData> {
   const [statsRes, orgsRes, contributorsRes] = await Promise.all([
     fetch(buildUrl(endpoint, "stats")),
     fetch(buildUrl(endpoint, "orgs")),
@@ -58,9 +64,17 @@ async function fetchDashboardData(endpoint: string): Promise<DashboardData> {
     throw new Error("One or more API requests failed. Please try again.");
   }
 
-  const statsJson: StatsResponse = await statsRes.json();
-  const orgsJson: OrgsResponse = await orgsRes.json();
-  const contributorsJson: ContributorsResponse = await contributorsRes.json();
+  return {
+    stats: await statsRes.json(),
+    orgs: await orgsRes.json(),
+    contributors: await contributorsRes.json(),
+  };
+}
+
+function normalizeDashboardData(raw: RawDashboardData): DashboardData {
+  const statsJson = raw.stats;
+  const orgsJson = raw.orgs;
+  const contributorsJson = raw.contributors;
 
   // Build a username → memberName lookup from contributors
   const loginToName = new Map<string, string>(
@@ -132,11 +146,18 @@ async function fetchDashboardData(endpoint: string): Promise<DashboardData> {
 
 type Status = "loading" | "success" | "error";
 
-export default function OssDashboard({ endpoint }: { endpoint: string }) {
-  const [status, setStatus] = useState<Status>("loading");
+export default function OssDashboard({
+  endpoint,
+  initialData,
+}: {
+  endpoint: string;
+  initialData?: RawDashboardData;
+}) {
+  const [status, setStatus] = useState<Status>(initialData ? "success" : "loading");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    () => (initialData ? normalizeDashboardData(initialData) : null),
+  );
   const [activeTab, setActiveTab] = useState<DashboardTab>("dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [organizationTag, setOrganizationTag] =
@@ -147,26 +168,25 @@ export default function OssDashboard({ endpoint }: { endpoint: string }) {
     useState<ContributorSortOptionId>("prCount");
 
   useEffect(() => {
-    let cancelled = false;
-    fetchDashboardData(endpoint)
-      .then((data) => {
-        if (!cancelled) {
-          setDashboardData(data);
-          setStatus("success");
-        }
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setErrorMessage(
-            err instanceof Error ? err.message : "Unexpected error.",
-          );
-          setStatus("error");
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [endpoint]);
+  if (initialData) return;
+  let cancelled = false;
+  fetchRawDashboardData(endpoint)
+    .then((raw) => {
+      if (!cancelled) {
+        setDashboardData(normalizeDashboardData(raw));
+        setStatus("success");
+      }
+    })
+    .catch((err: unknown) => {
+      if (!cancelled) {
+        setErrorMessage(err instanceof Error ? err.message : "Unexpected error.");
+        setStatus("error");
+      }
+    });
+  return () => {
+    cancelled = true;
+  };
+}, [endpoint, initialData]);
 
   const query = searchQuery.trim().toLowerCase();
 
